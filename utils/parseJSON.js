@@ -6,6 +6,7 @@ const parseJSON = JSONForParsing => {
     return parsedJSON;
   } catch (err) {
     console.log('please provide proper JSON, error msg:', err.message);
+    return false;
   }
 }
 

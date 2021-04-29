@@ -8,9 +8,11 @@ const readInputFile = () => {
   if (fs.existsSync(inputFile)) {
     const dataFromFile = fs.readFileSync(inputFile);
     return dataFromFile;
-  } else {
-    console.log('please add file to project folder and use as example shows: node index.js yourFile.*');
   }
+  
+  console.log('please add file to project folder and use as example shows: node index.js yourFile.*');
+  return false;
+
 }
 
 export default readInputFile;
