@@ -1,6 +1,10 @@
+"use strict";
 import fs from 'fs';
 
-// TODO: extend function for more arguments and flags
+/**
+ * TODO: extend function for more arguments and flags,
+ * different file extensions and etc.
+ */
 
 const inputFile = process.argv[2];
 

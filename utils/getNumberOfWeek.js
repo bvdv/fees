@@ -1,9 +1,11 @@
-// Returns the ISO week of the date.
-// code from https://weeknumber.com/how-to/javascript
+"use strict";
+/**
+ * Returns the ISO week of the date.
+ * code from https://weeknumber.com/how-to/javascript
+ */
 
 // TODO: add errors handling
-
-const getNumberOfWeek = (dateOfOperation = Date.now()) => {
+const getNumberOfWeek = (dateOfOperation) => {
   let date = new Date(dateOfOperation);
   date.setHours(0, 0, 0, 0);
   // Thursday in current week decides the year.
