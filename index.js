@@ -12,6 +12,6 @@ calcCommissionFees(
     parseJSON,
     getNumberOfWeek,
     cashIn,
-    cashOutJuridical,
     cashOutNatural,
+    cashOutJuridical
 );

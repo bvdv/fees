@@ -8,8 +8,8 @@ const calcCommissionFees = (
   parseJSON,
   getNumberOfWeek,
   cashIn,
-  cashOutJuridical,
   cashOutNatural,
+  cashOutJuridical
 ) => {
   const readFile = readInputFile();
   const parsedJSONdata = parseJSON(readFile);
@@ -28,47 +28,51 @@ const calcCommissionFees = (
       let userTotalCashOut = 0;
       let firstWeekLimitExcess;
 
-      const result = parsedJSONdataWithFees
-        .filter((obj) => obj.user_id === uniqUserID)
-        .filter((obj) => obj.user_type === "natural" && obj.type === "cash_out")
-        .reduce((prevObj, obj) => {
-          if (obj) {
-            const cashOutWeekLimit = cashOutNatural.week_limit.amount;
-            let currentWeek = getNumberOfWeek(obj.date);
-            let prevWeek = getNumberOfWeek(prevObj.date);
+      parsedJSONdataWithFees
+        .filter((performedOperation) => performedOperation.user_id === uniqUserID)
+        .filter((performedOperation) => (
+          performedOperation.user_type === "natural" && performedOperation.type === "cash_out")
+        )
+        .reduce((prevPerformedOperation, performedOperation) => {
+          if (performedOperation) {
+            const cashOutWeekLimitNatural = cashOutNatural.week_limit.amount;
+            const cashOutWeekFeeNatural = cashOutNatural.percents / 100;
+            const currentWeek = getNumberOfWeek(performedOperation.date);
+            const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
 
-            userTotalCashOut += obj.operation.amount;
+            userTotalCashOut += performedOperation.operation.amount;
 
             if (
-              userTotalCashOut > cashOutWeekLimit
+              userTotalCashOut > cashOutWeekLimitNatural
               && currentWeek === prevWeek
               && !firstWeekLimitExcess
             ) {
               // calculate fee for first occurrence of cash out week limit excess
               firstWeekLimitExcess = true;
-              obj.operation.commission_fee = (obj.operation.amount - (cashOutWeekLimit - prevObj.operation.amount)) * (cashOutNatural.percents / 100);
+              performedOperation.operation.commission_fee = (performedOperation.operation.amount - (cashOutWeekLimitNatural - prevPerformedOperation.operation.amount)) * cashOutWeekFeeNatural;
 
             } else if (
-              userTotalCashOut > cashOutWeekLimit
-              && !prevObj.date
+              userTotalCashOut > cashOutWeekLimitNatural
+              && !prevPerformedOperation.date
               && !firstWeekLimitExcess
             ) {
               // calculate fee if first operation of week exceeded cash out week limit
               firstWeekLimitExcess = true;
-              obj.operation.commission_fee = (obj.operation.amount - cashOutWeekLimit) * (cashOutNatural.percents / 100);
+              performedOperation.operation.commission_fee = (performedOperation.operation.amount - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
 
-            } else if (userTotalCashOut > cashOutWeekLimit && currentWeek === prevWeek) {
+            } else if (userTotalCashOut > cashOutWeekLimitNatural && currentWeek === prevWeek) {
               // calculate fee if cash out week limit exceeded
-              obj.operation.commission_fee = obj.operation.amount * (cashOutNatural.percents / 100);
+              performedOperation.operation.commission_fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
             }
           }
-          console.log('d', parsedJSONdataWithFees);
-          return obj;
+
+          return performedOperation;
         }, 0);
     });
-
-    return false;
+    console.log(parsedJSONdataWithFees);
   }
+
+  return false;
 };
 
 export default calcCommissionFees;
