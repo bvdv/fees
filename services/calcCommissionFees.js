@@ -51,7 +51,15 @@ const calcCommissionFees = async (
       cashOutFeeMinJuridical
     );
 
-    console.log(parsedJSONdataWithFees);
+    parsedJSONdataWithFees.forEach((operation) => {
+      if (operation.operation.commission_fee) {
+        console.log(operation.operation.commission_fee);
+      } else {
+        console.log(operation.operation.commission_fee = 0);
+      }
+      
+    });
+    
   }
 
   return false;
@@ -149,7 +157,7 @@ function calcCashOutCommissionFeesJuridical(
 
         const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
 
-        if (calcCashOutFeeJuridical >= cashOutFeeMinJuridical) {
+        if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
           performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
         } else {
           performedOperation.operation.commission_fee = calcCashOutFeeJuridical;
