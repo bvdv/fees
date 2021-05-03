@@ -3,25 +3,25 @@
  * TODO: make calcCommissionFees function with 
  * for loop and if..elseif for performance benchmark against forEach, filter, reduce and etc.
  */
-const calcCommissionFees = (
+const calcCommissionFees = async (
   readInputFile,
   parseJSON,
   getNumberOfWeek,
-  cashIn,
-  cashOutNatural,
-  cashOutJuridical
+  getFeesConfig
 ) => {
   const readFile = readInputFile();
   const parsedJSONdata = parseJSON(readFile);
-  const cashInFee = cashIn.percents / 100;
-  const cashInMaxFee = cashIn.max.amount;
-  const cashOutWeekFeeNatural = cashOutNatural.percents / 100;
-  const cashOutWeekLimitNatural = cashOutNatural.week_limit.amount;
-  const cashOutFeeJuridical = cashOutJuridical.percents / 100;
-  const cashOutFeeMinJuridical = cashOutJuridical.min.amount;
 
-  if (parsedJSONdata) {
+  let feesConfig = await getFeesConfig();
 
+  if (parsedJSONdata && feesConfig) {
+
+    const cashInFee = feesConfig.cashIn.percents / 100;
+    const cashInMaxFee = feesConfig.cashIn.max.amount;
+    const cashOutWeekFeeNatural = feesConfig.cashOutNatural.percents / 100;
+    const cashOutWeekLimitNatural = feesConfig.cashOutNatural.week_limit.amount;
+    const cashOutFeeJuridical = feesConfig.cashOutJuridical.percents / 100;
+    const cashOutFeeMinJuridical = feesConfig.cashOutJuridical.min.amount;
     const parsedJSONdataWithFees = [...parsedJSONdata];
 
     // get array of all unique user_id from JSON file
