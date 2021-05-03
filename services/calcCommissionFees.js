@@ -13,12 +13,12 @@ const calcCommissionFees = (
 ) => {
   const readFile = readInputFile();
   const parsedJSONdata = parseJSON(readFile);
-  const cashInFee = cashIn.percents;
+  const cashInFee = cashIn.percents / 100;
   const cashInMaxFee = cashIn.max.amount;
   const cashOutWeekFeeNatural = cashOutNatural.percents / 100;
   const cashOutWeekLimitNatural = cashOutNatural.week_limit.amount;
- 
-
+  const cashOutFeeJuridical = cashOutJuridical.percents / 100;
+  const cashOutFeeMinJuridical = cashOutJuridical.min.amount;
 
   if (parsedJSONdata) {
 
@@ -30,19 +30,26 @@ const calcCommissionFees = (
     ];
 
     calcCashInCommissionFees(
-        parsedJSONdataWithFees,
-        allUniqUserIds,
-        cashInFee,
-        cashInMaxFee
+      parsedJSONdataWithFees,
+      allUniqUserIds,
+      cashInFee,
+      cashInMaxFee
     );
 
-    // calcCashOutCommissionFeesNatural(
-    //   parsedJSONdataWithFees,
-    //   allUniqUserIds,
-    //   cashOutWeekLimitNatural,
-    //   cashOutWeekFeeNatural,
-    //   getNumberOfWeek
-    // );
+    calcCashOutCommissionFeesNatural(
+      parsedJSONdataWithFees,
+      allUniqUserIds,
+      cashOutWeekLimitNatural,
+      cashOutWeekFeeNatural,
+      getNumberOfWeek
+    );
+
+    calcCashOutCommissionFeesJuridical(
+      parsedJSONdataWithFees,
+      allUniqUserIds,
+      cashOutFeeJuridical,
+      cashOutFeeMinJuridical
+    );
 
     console.log(parsedJSONdataWithFees);
   }
@@ -61,22 +68,18 @@ function calcCashInCommissionFees(
 
     parsedJSONdataWithFees
       .filter((performedOperation) => performedOperation.user_id === uniqUserID)
-      .filter((performedOperation) => performedOperation.type === "cash_in")
+      .filter((performedOperation) => (
+        performedOperation.type === "cash_in"))
       .map((performedOperation) => {
 
-        console.log('cur ID', `${performedOperation.user_id}, cash_in - ${performedOperation.operation.amount}`); // comment
-        console.log('cur amount', `${performedOperation.operation.amount}`); // comment
+        const calcCashInFee = performedOperation.operation.amount * cashInFee;
 
-        let calcCashInFee = performedOperation.operation.amount * (cashInFee / 100);
-
-        if (calcCashInFee > cashInMaxFee) {
-          console.log(calcCashInFee = cashInMaxFee);
+        if (calcCashInFee >= cashInMaxFee) {
+          performedOperation.operation.commission_fee = cashInMaxFee;
         } else {
-          console.log(calcCashInFee);
+          performedOperation.operation.commission_fee = calcCashInFee;
         }
-
       });
-
   });
 }
 
@@ -128,8 +131,31 @@ function calcCashOutCommissionFeesNatural(
   });
 }
 
-function calcCashOutCommissionFeesJuridical(params) {
+function calcCashOutCommissionFeesJuridical(
+  parsedJSONdataWithFees,
+  allUniqUserIds,
+  cashOutFeeJuridical,
+  cashOutFeeMinJuridical
+) {
 
+  allUniqUserIds.forEach((uniqUserID) => {
+
+    parsedJSONdataWithFees
+      .filter((performedOperation) => performedOperation.user_id === uniqUserID)
+      .filter((performedOperation) => (
+        performedOperation.user_type === "juridical" && performedOperation.type === "cash_out")
+      )
+      .map((performedOperation) => {
+
+        const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
+
+        if (calcCashOutFeeJuridical >= cashOutFeeMinJuridical) {
+          performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
+        } else {
+          performedOperation.operation.commission_fee = calcCashOutFeeJuridical;
+        }
+      });
+  });
 }
 
 export default calcCommissionFees;
