@@ -1,5 +1,9 @@
-import axios from 'axios';
+/**
+ * TODO: make getFeesConfig return or data from local JSON 
+ * or from endpoints
+ */
 
+import axios from 'axios';
 import cashIn from '../config/cash-in.js';
 import cashOutNatural from '../config/cash-out-natural.js';
 import cashOutJuridical from '../config/cash-out-juridical.js';
