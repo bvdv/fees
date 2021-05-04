@@ -1,5 +1,5 @@
 "use strict";
-import calcCommissionFees from './services/calcCommissionFees.js';
+import { calcCommissionFees } from './services/calcCommissionFees.js';
 import readInputFile from './utils/readInputFile.js';
 import parseJSON from './utils/parseJSON.js';
 import getNumberOfWeek from './utils/getNumberOfWeek.js';

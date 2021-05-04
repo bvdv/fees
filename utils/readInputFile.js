@@ -6,9 +6,7 @@ import fs from 'fs';
  * different file extensions and etc.
  */
 
-const inputFile = process.argv[2];
-
-const readInputFile = () => {
+const readInputFile = (inputFile = process.argv[2]) => {
   if (fs.existsSync(inputFile)) {
     const dataFromFile = fs.readFileSync(inputFile);
     return dataFromFile;

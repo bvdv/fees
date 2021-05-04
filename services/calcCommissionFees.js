@@ -89,6 +89,8 @@ function calcCashInCommissionFees(
         }
       });
   });
+
+  return parsedJSONdataWithFees;
 }
 
 function calcCashOutCommissionFeesNatural(
@@ -137,6 +139,8 @@ function calcCashOutCommissionFeesNatural(
         return performedOperation;
       }, 0);
   });
+
+  return parsedJSONdataWithFees;
 }
 
 function calcCashOutCommissionFeesJuridical(
@@ -164,6 +168,13 @@ function calcCashOutCommissionFeesJuridical(
         }
       });
   });
+
+  return parsedJSONdataWithFees;
 }
 
-export default calcCommissionFees;
+export {
+  calcCommissionFees,
+  calcCashInCommissionFees,
+  calcCashOutCommissionFeesNatural,
+  calcCashOutCommissionFeesJuridical
+}
