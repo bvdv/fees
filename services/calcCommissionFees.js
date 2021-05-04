@@ -53,9 +53,9 @@ const calcCommissionFees = async (
 
     parsedJSONdataWithFees.forEach((operation) => {
       if (operation.operation.commission_fee) {
-        console.log(operation.operation.commission_fee);
+        console.log(operation.operation.commission_fee.toFixed(2));
       } else {
-        console.log(operation.operation.commission_fee = 0);
+        console.log((operation.operation.commission_fee = 0).toFixed(2));
       }
       
     });
@@ -85,7 +85,8 @@ function calcCashInCommissionFees(
         if (calcCashInFee >= cashInMaxFee) {
           performedOperation.operation.commission_fee = cashInMaxFee;
         } else {
-          performedOperation.operation.commission_fee = calcCashInFee;
+          const fee = Math.ceil(calcCashInFee * 100 + Number.EPSILON) / 100;
+          performedOperation.operation.commission_fee = fee;
         }
       });
   });
@@ -123,16 +124,19 @@ function calcCashOutCommissionFeesNatural(
           if (currentWeek === prevWeek && !firstWeekLimitExcess) {
             // calculate fee for first occurrence of cash out week limit excess
             firstWeekLimitExcess = true;
-            performedOperation.operation.commission_fee = (performedOperation.operation.amount - (cashOutWeekLimitNatural - prevPerformedOperation.operation.amount)) * cashOutWeekFeeNatural;
+            const fee = (performedOperation.operation.amount - (cashOutWeekLimitNatural - prevPerformedOperation.operation.amount)) * cashOutWeekFeeNatural;
+            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
 
           } else if (!prevPerformedOperation.date && !firstWeekLimitExcess) {
             // calculate fee if first operation of week exceeded cash out week limit
             firstWeekLimitExcess = true;
-            performedOperation.operation.commission_fee = (performedOperation.operation.amount - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
+            const fee = (performedOperation.operation.amount - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
+            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
 
           } else if (currentWeek === prevWeek) {
             // calculate fee if cash out week limit exceeded
-            performedOperation.operation.commission_fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
+            const fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
+            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
           }
         }
 
@@ -164,7 +168,8 @@ function calcCashOutCommissionFeesJuridical(
         if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
           performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
         } else {
-          performedOperation.operation.commission_fee = calcCashOutFeeJuridical;
+          const fee = Math.ceil(calcCashOutFeeJuridical * 100 + Number.EPSILON) / 100;
+          performedOperation.operation.commission_fee = fee;
         }
       });
   });

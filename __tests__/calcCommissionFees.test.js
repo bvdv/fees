@@ -6,6 +6,7 @@ import {
 } from '../services/calcCommissionFees.js';
 import getNumberOfWeek from '../utils/getNumberOfWeek';
 
+// TODO: test for main calcCommissionFees()
 describe('Commission Fees calculation tests', () => {
     test('calcCashInCommissionFees() test', () => {
         const parsedJSONdataWithFees = [
@@ -59,7 +60,7 @@ describe('Commission Fees calculation tests', () => {
     test('calcCashOutCommissionFeesJuridical() test', () => {
         const parsedJSONdataWithFees = [
             { "date": "2016-01-05", "user_id": 1, "user_type": "juridical", "type": "cash_out", "operation": { "amount": 200.00, "currency": "EUR" } },
-            { "date": "2016-01-06", "user_id": 2, "user_type": "juridical", "type": "cash_out", "operation": { "amount": 100000.00, "currency": "EUR" } }
+            { "date": "2016-01-06", "user_id": 2, "user_type": "juridical", "type": "cash_out", "operation": { "amount": 100014.00, "currency": "EUR" } }
         ];
         const allUniqUserIds = [1, 2];
         const cashOutFeeJuridical = 0.003;
@@ -67,7 +68,7 @@ describe('Commission Fees calculation tests', () => {
          
         const properResult = [
             { "date": "2016-01-05", "operation": { "amount": 200, "commission_fee": 0.6, "currency": "EUR" }, "type": "cash_out", "user_id": 1, "user_type": "juridical" }, 
-            { "date": "2016-01-06", "operation": { "amount": 100000, "commission_fee": 300, "currency": "EUR" }, "type": "cash_out", "user_id": 2, "user_type": "juridical" }
+            { "date": "2016-01-06", "operation": { "amount": 100014, "commission_fee": 300.05, "currency": "EUR" }, "type": "cash_out", "user_id": 2, "user_type": "juridical" }
         ];
 
         const calculatedResult = calcCashOutCommissionFeesJuridical(

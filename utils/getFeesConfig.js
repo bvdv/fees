@@ -1,3 +1,4 @@
+"use strict";
 /**
  * TODO: make getFeesConfig return or data from local JSON 
  * or from endpoints
