@@ -86,11 +86,11 @@ async function calcCashOutCommissionFeesNatural(
       (performedOperation) => performedOperation.user_id === uniqUserID,
     );
 
-    const cashInUserOperations = userOperations.filter(
+    const cashCashOutOperations = userOperations.filter(
       (performedOperation) => (performedOperation.user_type === 'natural' && performedOperation.type === 'cash_out'),
     );
 
-    cashInUserOperations.reduce((prevPerformedOperation, performedOperation) => {
+    cashCashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
       userWeekTotalCashOut += performedOperation.operation.amount;
 
       if (performedOperation && userWeekTotalCashOut > cashOutWeekLimitNatural) {
@@ -137,11 +137,11 @@ async function calcCashOutCommissionFeesJuridical(
       (performedOperation) => performedOperation.user_id === uniqUserID,
     );
 
-    const cashInUserOperations = userOperations.filter(
+    const cashCashOutOperations = userOperations.filter(
       (performedOperation) => (performedOperation.user_type === 'juridical' && performedOperation.type === 'cash_out'),
     );
 
-    cashInUserOperations.forEach((performedOperation) => {
+    cashCashOutOperations.forEach((performedOperation) => {
       const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
 
       if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
