@@ -1,4 +1,3 @@
-"use strict";
 import fs from 'fs';
 
 /**
@@ -11,10 +10,9 @@ const readInputFile = (inputFile = process.argv[2]) => {
     const dataFromFile = fs.readFileSync(inputFile);
     return dataFromFile;
   }
-  
+
   console.log('please add file to project folder and use as example shows: node index.js yourFile.*');
   return false;
-
-}
+};
 
 export default readInputFile;

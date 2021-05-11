@@ -60,3 +60,13 @@ for Windows
 ```
 npm run test-w
 ```
+
+## ESLint
+
+### Perform command 
+
+fix *.js files by Airbnb JavaScript Style Guide
+
+```
+npm run lint
+```

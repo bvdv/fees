@@ -8,28 +8,28 @@ describe('Utils tests', () => {
   test('getFeesConfig() test', async () => {
     expect(await getFeesConfig()).toEqual(
       {
-        "cashIn": {
-          "max": {
-            "amount": 5,
-            "currency": "EUR"
+        cashIn: {
+          max: {
+            amount: 5,
+            currency: 'EUR',
           },
-          "percents": 0.03
+          percents: 0.03,
         },
-        "cashOutJuridical": {
-          "min": {
-            "amount": 0.5,
-            "currency": "EUR"
+        cashOutJuridical: {
+          min: {
+            amount: 0.5,
+            currency: 'EUR',
           },
-          "percents": 0.3
+          percents: 0.3,
         },
-        "cashOutNatural": {
-          "percents": 0.3,
-          "week_limit": {
-            "amount": 1000,
-            "currency": "EUR"
-          }
-        }
-      }
+        cashOutNatural: {
+          percents: 0.3,
+          week_limit: {
+            amount: 1000,
+            currency: 'EUR',
+          },
+        },
+      },
     );
   });
 
@@ -53,14 +53,18 @@ describe('Utils tests', () => {
 
   test('parseJSON() test', () => {
     const properJSON = [
-      { "date": "2016-01-05", "user_id": 1, "user_type": "natural", "type": "cash_in", "operation": { "amount": 200.00, "currency": "EUR" } },
-      { "date": "2016-01-06", "user_id": 2, "user_type": "juridical", "type": "cash_out", "operation": { "amount": 300.00, "currency": "EUR" } }
+      {
+        date: '2016-01-05', user_id: 1, user_type: 'natural', type: 'cash_in', operation: { amount: 200.00, currency: 'EUR' },
+      },
+      {
+        date: '2016-01-06', user_id: 2, user_type: 'juridical', type: 'cash_out', operation: { amount: 300.00, currency: 'EUR' },
+      },
     ];
     const stringJSON = `[
       { "date": "2016-01-05", "user_id": 1, "user_type": "natural", "type": "cash_in", "operation": { "amount": 200.00, "currency": "EUR" } },
       { "date": "2016-01-06", "user_id": 2, "user_type": "juridical", "type": "cash_out", "operation": { "amount": 300.00, "currency": "EUR" } } 
     ]`;
-    const notProperJSON = `{ "date": "2016-01-05", "user_id": 1, "user_type": "natural"},`;
+    const notProperJSON = '{ "date": "2016-01-05", "user_id": 1, "user_type": "natural"},';
     expect(parseJSON(stringJSON)).toEqual(properJSON);
     expect(parseJSON(notProperJSON)).toBeFalsy();
   });
@@ -69,7 +73,7 @@ describe('Utils tests', () => {
     // file not exist
     expect(readInputFile('input.jso')).toBeFalsy();
 
-    //file exist
+    // file exist
     const dataFromFile = fs.readFileSync('input.json');
     expect(readInputFile('input.json')).toEqual(dataFromFile);
   });

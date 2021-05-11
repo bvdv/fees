@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test-w": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest --no-cache",
-    "test-l": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test-l": "node --experimental-vm-modules node_modules/.bin/jest",
+    "lint": "eslint --fix ."
   },
   "author": "",
   "license": "ISC",
