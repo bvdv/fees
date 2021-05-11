@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2021-05-03",
+    "user_id": 1,
+    "user_type": "natural",
+    "type": "cash_out",
+    "operation": {
+      "amount": 980.0,
+      "currency": "EUR"
+    }
+  },
+  {
+    "date": "2021-05-07",
+    "user_id": 1,
+    "user_type": "natural",
+    "type": "cash_out",
+    "operation": {
+      "amount": 20.0,
+      "currency": "EUR"
+    }
+  },
+  {
+    "date": "2021-05-07",
+    "user_id": 1,
+    "user_type": "natural",
+    "type": "cash_out",
+    "operation": {
+      "amount": 800.0,
+      "currency": "EUR"
+    }
+  }
+]

@@ -1,27 +1,19 @@
 "use strict";
+import readInputFile from '../utils/readInputFile.js';
+import parseJSON from '../utils/parseJSON.js';
+import getNumberOfWeek from '../utils/getNumberOfWeek.js';
+import getFeesConfig from '../utils/getFeesConfig.js';
+import roundToSmallestCurrencyItem from '../utils/roundToSmallestCurrencyItem.js';
 /**
  * TODO: make calcCommissionFees function with 
  * for loop and if..elseif for performance benchmark against forEach, filter, reduce and etc.
  */
-const calcCommissionFees = async (
-  readInputFile,
-  parseJSON,
-  getNumberOfWeek,
-  getFeesConfig
-) => {
+const calcCommissionFees = async () => {
   const readFile = readInputFile();
   const parsedJSONdata = parseJSON(readFile);
+  
+  if (parsedJSONdata) {
 
-  let feesConfig = await getFeesConfig();
-
-  if (parsedJSONdata && feesConfig) {
-
-    const cashInFee = feesConfig.cashIn.percents / 100;
-    const cashInMaxFee = feesConfig.cashIn.max.amount;
-    const cashOutWeekFeeNatural = feesConfig.cashOutNatural.percents / 100;
-    const cashOutWeekLimitNatural = feesConfig.cashOutNatural.week_limit.amount;
-    const cashOutFeeJuridical = feesConfig.cashOutJuridical.percents / 100;
-    const cashOutFeeMinJuridical = feesConfig.cashOutJuridical.min.amount;
     const parsedJSONdataWithFees = [...parsedJSONdata];
 
     // get array of all unique user_id from JSON file
@@ -29,26 +21,19 @@ const calcCommissionFees = async (
       ...new Set(parsedJSONdataWithFees.map(({ user_id }) => user_id)),
     ];
 
-    calcCashInCommissionFees(
+    await calcCashInCommissionFees(
       parsedJSONdataWithFees,
-      allUniqUserIds,
-      cashInFee,
-      cashInMaxFee
+      allUniqUserIds
     );
 
-    calcCashOutCommissionFeesNatural(
+    await calcCashOutCommissionFeesNatural(
       parsedJSONdataWithFees,
-      allUniqUserIds,
-      cashOutWeekLimitNatural,
-      cashOutWeekFeeNatural,
-      getNumberOfWeek
+      allUniqUserIds
     );
 
-    calcCashOutCommissionFeesJuridical(
+    await calcCashOutCommissionFeesJuridical(
       parsedJSONdataWithFees,
-      allUniqUserIds,
-      cashOutFeeJuridical,
-      cashOutFeeMinJuridical
+      allUniqUserIds
     );
 
     parsedJSONdataWithFees.forEach((operation) => {
@@ -57,20 +42,20 @@ const calcCommissionFees = async (
       } else {
         console.log((operation.operation.commission_fee = 0).toFixed(2));
       }
-      
-    });
-    
+    });    
   }
 
   return false;
 };
 
-function calcCashInCommissionFees(
+async function calcCashInCommissionFees(
   parsedJSONdataWithFees,
-  allUniqUserIds,
-  cashInFee,
-  cashInMaxFee
+  allUniqUserIds
 ) {
+
+  const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-in');
+  const cashInFee = feesConfig.percents / 100;
+  const cashInMaxFee = feesConfig.max.amount;
 
   allUniqUserIds.forEach((uniqUserID) => {
 
@@ -85,7 +70,7 @@ function calcCashInCommissionFees(
         if (calcCashInFee >= cashInMaxFee) {
           performedOperation.operation.commission_fee = cashInMaxFee;
         } else {
-          const fee = Math.ceil(calcCashInFee * 100 + Number.EPSILON) / 100;
+          const fee = roundToSmallestCurrencyItem(calcCashInFee);
           performedOperation.operation.commission_fee = fee;
         }
       });
@@ -94,17 +79,17 @@ function calcCashInCommissionFees(
   return parsedJSONdataWithFees;
 }
 
-function calcCashOutCommissionFeesNatural(
+async function calcCashOutCommissionFeesNatural(
   parsedJSONdataWithFees,
-  allUniqUserIds,
-  cashOutWeekLimitNatural,
-  cashOutWeekFeeNatural,
-  getNumberOfWeek
+  allUniqUserIds
 ) {
+  const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-natural');
+  const cashOutWeekFeeNatural = feesConfig.percents / 100;
+  const cashOutWeekLimitNatural = feesConfig.week_limit.amount;
 
   allUniqUserIds.forEach((uniqUserID) => {
 
-    let userTotalCashOut = 0;
+    let userWeekTotalCashOut = 0;
     let firstWeekLimitExcess;
 
     parsedJSONdataWithFees
@@ -114,9 +99,9 @@ function calcCashOutCommissionFeesNatural(
       )
       .reduce((prevPerformedOperation, performedOperation) => {
 
-        userTotalCashOut += performedOperation.operation.amount;
+        userWeekTotalCashOut += performedOperation.operation.amount;
 
-        if (performedOperation && userTotalCashOut > cashOutWeekLimitNatural) {
+        if (performedOperation && userWeekTotalCashOut > cashOutWeekLimitNatural) {
 
           const currentWeek = getNumberOfWeek(performedOperation.date);
           const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
@@ -125,18 +110,20 @@ function calcCashOutCommissionFeesNatural(
             // calculate fee for first occurrence of cash out week limit excess
             firstWeekLimitExcess = true;
             const fee = (performedOperation.operation.amount - (cashOutWeekLimitNatural - prevPerformedOperation.operation.amount)) * cashOutWeekFeeNatural;
-            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
+            performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
 
           } else if (!prevPerformedOperation.date && !firstWeekLimitExcess) {
             // calculate fee if first operation of week exceeded cash out week limit
             firstWeekLimitExcess = true;
             const fee = (performedOperation.operation.amount - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
-            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
+            performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
 
           } else if (currentWeek === prevWeek) {
             // calculate fee if cash out week limit exceeded
             const fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
-            performedOperation.operation.commission_fee = Math.ceil(fee * 100 + Number.EPSILON) / 100;
+            performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
+          } else {
+            userWeekTotalCashOut = 0;
           }
         }
 
@@ -147,12 +134,13 @@ function calcCashOutCommissionFeesNatural(
   return parsedJSONdataWithFees;
 }
 
-function calcCashOutCommissionFeesJuridical(
+async function calcCashOutCommissionFeesJuridical(
   parsedJSONdataWithFees,
-  allUniqUserIds,
-  cashOutFeeJuridical,
-  cashOutFeeMinJuridical
+  allUniqUserIds
 ) {
+  const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-juridical');
+  const cashOutFeeJuridical = feesConfig.percents / 100;
+  const cashOutFeeMinJuridical = feesConfig.min.amount;
 
   allUniqUserIds.forEach((uniqUserID) => {
 
@@ -168,7 +156,7 @@ function calcCashOutCommissionFeesJuridical(
         if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
           performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
         } else {
-          const fee = Math.ceil(calcCashOutFeeJuridical * 100 + Number.EPSILON) / 100;
+          const fee = roundToSmallestCurrencyItem(calcCashOutFeeJuridical);
           performedOperation.operation.commission_fee = fee;
         }
       });
