@@ -13,5 +13,28 @@
         "sourceType": "module"
     },
     "rules": {
+        "no-use-before-define": [
+            "error",
+            {
+                "functions": false
+            }
+        ],
+        "import/extensions": [
+            "error",
+            "never",
+            {
+                "js": "ignorePackages"
+            }
+        ],
+        "no-param-reassign": [
+            "error",
+            {
+                "props": true,
+                "ignorePropertyModificationsFor": [
+                    "performedOperation",
+                    "operation"
+                ]
+            }
+        ]
     }
 }

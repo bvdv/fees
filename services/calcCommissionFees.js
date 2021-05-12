@@ -13,30 +13,23 @@ const calcCommissionFees = async (readFile = readInputFile()) => {
   let parsedJSONdataWithFees = [];
 
   if (parsedJSONdata) {
+    // check for single object JSON
     if (typeof parsedJSONdata[Symbol.iterator] !== 'function') {
       parsedJSONdataWithFees.push(parsedJSONdata);
     } else {
       parsedJSONdataWithFees = [...parsedJSONdata];
     }
 
-    // get array of all unique user_id from JSON file
-    const allUniqUserIds = [
-      ...new Set(parsedJSONdataWithFees.map(({ user_id }) => user_id)),
-    ];
-
     await calcCashInCommissionFees(
       parsedJSONdataWithFees,
-      allUniqUserIds,
     );
 
     await calcCashOutCommissionFeesNatural(
       parsedJSONdataWithFees,
-      allUniqUserIds,
     );
 
     await calcCashOutCommissionFeesJuridical(
       parsedJSONdataWithFees,
-      allUniqUserIds,
     );
 
     stdoutResult(parsedJSONdataWithFees);
@@ -47,117 +40,94 @@ const calcCommissionFees = async (readFile = readInputFile()) => {
   return false;
 };
 
-async function calcCashInCommissionFees(
-  parsedJSONdataWithFees,
-  allUniqUserIds,
-) {
+async function calcCashInCommissionFees(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-in');
   const cashInFee = feesConfig.percents / 100;
   const cashInMaxFee = feesConfig.max.amount;
 
-  allUniqUserIds.forEach((uniqUserID) => {
-    const userOperations = parsedJSONdataWithFees.filter(
-      (performedOperation) => performedOperation.user_id === uniqUserID,
-    );
+  const cashInUserOperations = sorting(parsedJSONdataWithFees, 'cash_in');
 
-    const cashInUserOperations = userOperations.filter((performedOperation) => (performedOperation.type === 'cash_in'));
+  cashInUserOperations.forEach((performedOperation) => {
+    const calcCashInFee = performedOperation.operation.amount * cashInFee;
 
-    cashInUserOperations.forEach((performedOperation) => {
-      const calcCashInFee = performedOperation.operation.amount * cashInFee;
-
-      if (calcCashInFee >= cashInMaxFee) {
-        performedOperation.operation.commission_fee = cashInMaxFee;
-      } else {
-        const fee = roundToSmallestCurrencyItem(calcCashInFee);
-        performedOperation.operation.commission_fee = fee;
-      }
-    });
+    if (calcCashInFee >= cashInMaxFee) {
+      performedOperation.operation.commission_fee = cashInMaxFee;
+    } else {
+      const fee = roundToSmallestCurrencyItem(calcCashInFee);
+      performedOperation.operation.commission_fee = fee;
+    }
   });
+  // });
 
   return parsedJSONdataWithFees;
 }
 
-async function calcCashOutCommissionFeesNatural(
-  parsedJSONdataWithFees,
-  allUniqUserIds,
-) {
+async function calcCashOutCommissionFeesNatural(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-natural');
   const cashOutWeekFeeNatural = feesConfig.percents / 100;
   const cashOutWeekLimitNatural = feesConfig.week_limit.amount;
 
-  allUniqUserIds.forEach((uniqUserID) => {
-    let userWeekTotalCashOut = 0;
-    let firstWeekLimitExcess;
+  let userWeekTotalCashOut = 0;
+  let firstWeekLimitExcess;
 
-    const userOperations = parsedJSONdataWithFees.filter(
-      (performedOperation) => performedOperation.user_id === uniqUserID,
-    );
+  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'natural');
 
-    const cashCashOutOperations = userOperations.filter(
-      (performedOperation) => (performedOperation.user_type === 'natural' && performedOperation.type === 'cash_out'),
-    );
+  // sort operations by user_id
+  cashCashOutOperations.sort((a, b) => a.user_id - b.user_id);
 
-    cashCashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
-      userWeekTotalCashOut += performedOperation.operation.amount;
+  cashCashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
+    const currentWeek = getNumberOfWeek(performedOperation.date);
+    const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
+    // userWeekTotalCashOut if new week started or new user_id
+    if (
+      performedOperation.user_id !== prevPerformedOperation.user_id
+      || currentWeek !== prevWeek
+    ) {
+      userWeekTotalCashOut = 0;
+      firstWeekLimitExcess = false;
+    }
 
-      if (performedOperation && userWeekTotalCashOut > cashOutWeekLimitNatural) {
-        const currentWeek = getNumberOfWeek(performedOperation.date);
-        const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
+    userWeekTotalCashOut += performedOperation.operation.amount;
 
-        if (currentWeek === prevWeek && !firstWeekLimitExcess) {
-          // calculate fee for first occurrence of cash out week limit excess
-          firstWeekLimitExcess = true;
-          const fee = (userWeekTotalCashOut - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
-          performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
-        } else if (!prevPerformedOperation.date && !firstWeekLimitExcess) {
-          // calculate fee if first operation of week exceeded cash out week limit
-          firstWeekLimitExcess = true;
-          const fee = (performedOperation.operation.amount - cashOutWeekLimitNatural)
+    if (performedOperation && userWeekTotalCashOut > cashOutWeekLimitNatural) {
+      if (!firstWeekLimitExcess) {
+        // calculate fee for first occurrence of cash out week limit excess
+        firstWeekLimitExcess = true;
+        const fee = (userWeekTotalCashOut - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
+        performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
+      } else if (currentWeek === prevWeek) {
+        // calculate fee if cash out week limit exceeded
+        const fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
+        performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
+      } else {
+        const fee = (performedOperation.operation.amount - cashOutWeekLimitNatural)
           * cashOutWeekFeeNatural;
-          performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
-        } else if (currentWeek === prevWeek) {
-          // calculate fee if cash out week limit exceeded
-          const fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
-          performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
-        } else {
-          userWeekTotalCashOut = 0;
-        }
+        performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
       }
+    }
 
-      return performedOperation;
-    }, 0);
-  });
+    return performedOperation;
+  }, 0);
 
   return parsedJSONdataWithFees;
 }
 
-async function calcCashOutCommissionFeesJuridical(
-  parsedJSONdataWithFees,
-  allUniqUserIds,
-) {
+async function calcCashOutCommissionFeesJuridical(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-juridical');
   const cashOutFeeJuridical = feesConfig.percents / 100;
   const cashOutFeeMinJuridical = feesConfig.min.amount;
 
-  allUniqUserIds.forEach((uniqUserID) => {
-    const userOperations = parsedJSONdataWithFees.filter(
-      (performedOperation) => performedOperation.user_id === uniqUserID,
-    );
+  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'juridical');
 
-    const cashCashOutOperations = userOperations.filter(
-      (performedOperation) => (performedOperation.user_type === 'juridical' && performedOperation.type === 'cash_out'),
-    );
+  cashCashOutOperations.forEach((performedOperation) => {
+    const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
 
-    cashCashOutOperations.forEach((performedOperation) => {
-      const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
-
-      if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
-        performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
-      } else {
-        const fee = roundToSmallestCurrencyItem(calcCashOutFeeJuridical);
-        performedOperation.operation.commission_fee = fee;
-      }
-    });
+    if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
+      performedOperation.operation.commission_fee = cashOutFeeMinJuridical;
+    } else {
+      const fee = roundToSmallestCurrencyItem(calcCashOutFeeJuridical);
+      performedOperation.operation.commission_fee = fee;
+    }
   });
 
   return parsedJSONdataWithFees;
@@ -171,6 +141,30 @@ function stdoutResult(parsedJSONdataWithFees) {
       console.log((operation.operation.commission_fee = 0).toFixed(2));
     }
   });
+}
+
+function sorting(
+  parsedJSONdataWithFees,
+  operationType = false,
+  userType = false,
+) {
+  if (userType === 'natural' || userType === 'juridical') {
+    const sortedUserOperations = parsedJSONdataWithFees.filter(
+      (performedOperation) => (
+        performedOperation.user_type === userType && performedOperation.type === operationType
+      ),
+    );
+    return sortedUserOperations;
+  }
+
+  if (operationType === 'cash_in' && !userType) {
+    const sortedUserOperations = parsedJSONdataWithFees.filter(
+      (performedOperation) => (performedOperation.type === operationType),
+    );
+    return sortedUserOperations;
+  }
+
+  return false;
 }
 
 export {
