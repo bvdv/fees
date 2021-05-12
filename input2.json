@@ -4,7 +4,7 @@
   "user_type": "natural",
   "type": "cash_out",
   "operation": {
-    "amount": 1000.00,
+    "amount": 1001.00,
     "currency": "EUR"
   }
 }

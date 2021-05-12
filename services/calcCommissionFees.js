@@ -7,12 +7,17 @@ import roundToSmallestCurrencyItem from '../utils/roundToSmallestCurrencyItem.js
  * TODO: make calcCommissionFees function with
  * for loop and if..elseif for performance benchmark against forEach, filter, reduce and etc.
  */
-const calcCommissionFees = async () => {
-  const readFile = readInputFile();
+const calcCommissionFees = async (readFile = readInputFile()) => {
   const parsedJSONdata = parseJSON(readFile);
 
+  let parsedJSONdataWithFees = [];
+
   if (parsedJSONdata) {
-    const parsedJSONdataWithFees = [...parsedJSONdata];
+    if (typeof parsedJSONdata[Symbol.iterator] !== 'function') {
+      parsedJSONdataWithFees.push(parsedJSONdata);
+    } else {
+      parsedJSONdataWithFees = [...parsedJSONdata];
+    }
 
     // get array of all unique user_id from JSON file
     const allUniqUserIds = [
@@ -35,6 +40,8 @@ const calcCommissionFees = async () => {
     );
 
     stdoutResult(parsedJSONdataWithFees);
+
+    return parsedJSONdataWithFees;
   }
 
   return false;
