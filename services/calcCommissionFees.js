@@ -57,7 +57,6 @@ async function calcCashInCommissionFees(parsedJSONdataWithFees) {
       performedOperation.operation.commission_fee = fee;
     }
   });
-  // });
 
   return parsedJSONdataWithFees;
 }
