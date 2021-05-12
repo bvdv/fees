@@ -3,12 +3,12 @@ import {
   calcCashInCommissionFees,
   calcCashOutCommissionFeesNatural,
   calcCashOutCommissionFeesJuridical,
-} from '../services/calcCommissionFees.js';
+} from '../services/calcCommissionFees';
 import getNumberOfWeek from '../utils/getNumberOfWeek';
 
 // TODO: test for main calcCommissionFees()
 describe('Commission Fees calculation tests', () => {
-  test('calcCashInCommissionFees() test', () => {
+  test('should caclulate commission fees for Cash In operations', async () => {
     const parsedJSONdataWithFees = [
       {
         date: '2016-01-05', user_id: 1, user_type: 'natural', type: 'cash_in', operation: { amount: 200.00, currency: 'EUR' },
@@ -18,8 +18,6 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
     const allUniqUserIds = [1, 2];
-    const cashInFee = 0.0003;
-    const cashInMaxFee = 5;
 
     const properResult = [
       {
@@ -30,17 +28,15 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = calcCashInCommissionFees(
+    const calculatedResult = await calcCashInCommissionFees(
       parsedJSONdataWithFees,
       allUniqUserIds,
-      cashInFee,
-      cashInMaxFee,
     );
 
     expect(calculatedResult).toEqual(properResult);
   });
 
-  test('calcCashOutCommissionFeesNatural() test', () => {
+  test('should caclulate commission fees for Cash Out Natural', async () => {
     const parsedJSONdataWithFees = [
       {
         date: '2016-01-05', user_id: 1, user_type: 'natural', type: 'cash_out', operation: { amount: 200.00, currency: 'EUR' },
@@ -50,8 +46,6 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
     const allUniqUserIds = [1, 2];
-    const cashOutWeekFeeNatural = 0.003;
-    const cashOutWeekLimitNatural = 1000;
 
     const properResult = [
       {
@@ -62,18 +56,16 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = calcCashOutCommissionFeesNatural(
+    const calculatedResult = await calcCashOutCommissionFeesNatural(
       parsedJSONdataWithFees,
       allUniqUserIds,
-      cashOutWeekLimitNatural,
-      cashOutWeekFeeNatural,
       getNumberOfWeek,
     );
 
     expect(calculatedResult).toEqual(properResult);
   });
 
-  test('calcCashOutCommissionFeesJuridical() test', () => {
+  test('should caclulate commission fees for Cash Out Juridical', async () => {
     const parsedJSONdataWithFees = [
       {
         date: '2016-01-05', user_id: 1, user_type: 'juridical', type: 'cash_out', operation: { amount: 200.00, currency: 'EUR' },
@@ -83,8 +75,6 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
     const allUniqUserIds = [1, 2];
-    const cashOutFeeJuridical = 0.003;
-    const cashOutFeeMinJuridical = 0.5;
 
     const properResult = [
       {
@@ -95,11 +85,9 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = calcCashOutCommissionFeesJuridical(
+    const calculatedResult = await calcCashOutCommissionFeesJuridical(
       parsedJSONdataWithFees,
       allUniqUserIds,
-      cashOutFeeJuridical,
-      cashOutFeeMinJuridical,
     );
 
     expect(calculatedResult).toEqual(properResult);

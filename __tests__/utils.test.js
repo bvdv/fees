@@ -1,39 +1,47 @@
 import fs from 'fs';
-import getFeesConfig from '../utils/getFeesConfig.js';
+import getFeesConfig from '../utils/getFeesConfig';
 import getNumberOfWeek from '../utils/getNumberOfWeek';
 import parseJSON from '../utils/parseJSON';
 import readInputFile from '../utils/readInputFile';
+import roundToSmallestCurrencyItem from '../utils/roundToSmallestCurrencyItem';
 
 describe('Utils tests', () => {
-  test('getFeesConfig() test', async () => {
-    expect(await getFeesConfig()).toEqual(
+  test('should get Fees Config from API endpoint', async () => {
+    const feeConfigCashIn = await getFeesConfig('http://vps785969.ovh.net/cash-in');
+    expect(feeConfigCashIn).toEqual(
       {
-        cashIn: {
-          max: {
-            amount: 5,
-            currency: 'EUR',
-          },
-          percents: 0.03,
+        max: {
+          amount: 5,
+          currency: 'EUR',
         },
-        cashOutJuridical: {
-          min: {
-            amount: 0.5,
-            currency: 'EUR',
-          },
-          percents: 0.3,
+        percents: 0.03,
+      },
+    );
+
+    const feeConfigCashOutJuridical = await getFeesConfig('http://vps785969.ovh.net/cash-out-juridical');
+    expect(feeConfigCashOutJuridical).toEqual(
+      {
+        min: {
+          amount: 0.5,
+          currency: 'EUR',
         },
-        cashOutNatural: {
-          percents: 0.3,
-          week_limit: {
-            amount: 1000,
-            currency: 'EUR',
-          },
+        percents: 0.3,
+      },
+    );
+
+    const feeConfigCashOutNatural = await getFeesConfig('http://vps785969.ovh.net/cash-out-natural');
+    expect(feeConfigCashOutNatural).toEqual(
+      {
+        percents: 0.3,
+        week_limit: {
+          amount: 1000,
+          currency: 'EUR',
         },
       },
     );
   });
 
-  test('getNumberOfWeek() test', () => {
+  test('should return ISO number of week', () => {
     expect(getNumberOfWeek('2016-01-07')).toEqual(1);
     expect(getNumberOfWeek('2016-11-18')).toEqual(46);
     expect(getNumberOfWeek('2021-03-14')).toEqual(10);
@@ -51,7 +59,7 @@ describe('Utils tests', () => {
     expect(getNumberOfWeek('2021-03-22')).toEqual(12);
   });
 
-  test('parseJSON() test', () => {
+  test('should parse input file to JSON', () => {
     const properJSON = [
       {
         date: '2016-01-05', user_id: 1, user_type: 'natural', type: 'cash_in', operation: { amount: 200.00, currency: 'EUR' },
@@ -69,12 +77,28 @@ describe('Utils tests', () => {
     expect(parseJSON(notProperJSON)).toBeFalsy();
   });
 
-  test('readInputFile() test', () => {
+  test('should read input file', () => {
     // file not exist
     expect(readInputFile('input.jso')).toBeFalsy();
 
     // file exist
     const dataFromFile = fs.readFileSync('input.json');
     expect(readInputFile('input.json')).toEqual(dataFromFile);
+  });
+
+  test('should round fee to smallest currency item', () => {
+    expect(roundToSmallestCurrencyItem('string')).toBeFalsy();
+
+    expect(roundToSmallestCurrencyItem('1.231')).toEqual(1.24);
+
+    expect(roundToSmallestCurrencyItem('1.2303')).toEqual(1.24);
+
+    expect(roundToSmallestCurrencyItem(0.2303)).toEqual(0.24);
+
+    expect(roundToSmallestCurrencyItem(1.2300003)).toEqual(1.24);
+
+    expect(roundToSmallestCurrencyItem(0.23000000000000003)).toEqual(0.24);
+    // TODO: need more info about floating point number precision
+    expect(roundToSmallestCurrencyItem(0.230000000000000003)).toEqual(0.23);
   });
 });
