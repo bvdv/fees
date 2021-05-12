@@ -77,7 +77,7 @@ async function calcCashOutCommissionFeesNatural(parsedJSONdataWithFees) {
   cashCashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
     const currentWeek = getNumberOfWeek(performedOperation.date);
     const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
-    // userWeekTotalCashOut if new week started or new user_id
+    // reset userWeekTotalCashOut if new week started or new user_id
     if (
       performedOperation.user_id !== prevPerformedOperation.user_id
       || currentWeek !== prevWeek
