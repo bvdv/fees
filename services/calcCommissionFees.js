@@ -20,17 +20,11 @@ const calcCommissionFees = async (readFile = readInputFile()) => {
       parsedJSONdataWithFees = [...parsedJSONdata];
     }
 
-    await calcCashInCommissionFees(
-      parsedJSONdataWithFees,
-    );
+    await calcCashInCommissionFees(parsedJSONdataWithFees);
 
-    await calcCashOutCommissionFeesNatural(
-      parsedJSONdataWithFees,
-    );
+    await calcCashOutCommissionFeesNatural(parsedJSONdataWithFees);
 
-    await calcCashOutCommissionFeesJuridical(
-      parsedJSONdataWithFees,
-    );
+    await calcCashOutCommissionFeesJuridical(parsedJSONdataWithFees);
 
     stdoutResult(parsedJSONdataWithFees);
 
@@ -44,7 +38,6 @@ async function calcCashInCommissionFees(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-in');
   const cashInFee = feesConfig.percents / 100;
   const cashInMaxFee = feesConfig.max.amount;
-
   const cashInUserOperations = sorting(parsedJSONdataWithFees, 'cash_in');
 
   cashInUserOperations.forEach((performedOperation) => {
@@ -65,11 +58,9 @@ async function calcCashOutCommissionFeesNatural(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-natural');
   const cashOutWeekFeeNatural = feesConfig.percents / 100;
   const cashOutWeekLimitNatural = feesConfig.week_limit.amount;
-
+  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'natural');
   let userWeekTotalCashOut = 0;
   let firstWeekLimitExcess;
-
-  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'natural');
 
   // sort operations by user_id
   cashCashOutOperations.sort((a, b) => a.user_id - b.user_id);
@@ -111,7 +102,6 @@ async function calcCashOutCommissionFeesJuridical(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-juridical');
   const cashOutFeeJuridical = feesConfig.percents / 100;
   const cashOutFeeMinJuridical = feesConfig.min.amount;
-
   const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'juridical');
 
   cashCashOutOperations.forEach((performedOperation) => {

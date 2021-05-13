@@ -199,9 +199,7 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = await calcCashInCommissionFees(
-      parsedJSONdataWithFees,
-    );
+    const calculatedResult = await calcCashInCommissionFees(parsedJSONdataWithFees);
 
     expect(calculatedResult).toEqual(properResult);
   });
@@ -241,9 +239,7 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = await calcCashOutCommissionFeesNatural(
-      parsedJSONdataWithFees,
-    );
+    const calculatedResult = await calcCashOutCommissionFeesNatural(parsedJSONdataWithFees);
 
     expect(calculatedResult).toEqual(properResult);
   });
@@ -283,9 +279,7 @@ describe('Commission Fees calculation tests', () => {
       },
     ];
 
-    const calculatedResult = await calcCashOutCommissionFeesJuridical(
-      parsedJSONdataWithFees,
-    );
+    const calculatedResult = await calcCashOutCommissionFeesJuridical(parsedJSONdataWithFees);
 
     expect(calculatedResult).toEqual(properResult);
   });
