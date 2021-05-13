@@ -94,13 +94,9 @@ async function calcCashOutCommissionFeesNatural(parsedJSONdataWithFees) {
         firstWeekLimitExcess = true;
         const fee = (userWeekTotalCashOut - cashOutWeekLimitNatural) * cashOutWeekFeeNatural;
         performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
-      } else if (currentWeek === prevWeek) {
+      } else {
         // calculate fee if cash out week limit exceeded
         const fee = performedOperation.operation.amount * cashOutWeekFeeNatural;
-        performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
-      } else {
-        const fee = (performedOperation.operation.amount - cashOutWeekLimitNatural)
-          * cashOutWeekFeeNatural;
         performedOperation.operation.commission_fee = roundToSmallestCurrencyItem(fee);
       }
     }
