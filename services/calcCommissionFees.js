@@ -4,7 +4,10 @@ import getNumberOfWeek from '../utils/getNumberOfWeek.js';
 import getFeesConfig from '../utils/getFeesConfig.js';
 import roundToSmallestCurrencyItem from '../utils/roundToSmallestCurrencyItem.js';
 /**
- * TODO: make calcCommissionFees function with
+ * TODO:
+ * 1. make parsedJSONdataWithFees immutable
+ *
+ * 2. make calcCommissionFees function with
  * for loop and if..elseif for performance benchmark against forEach, filter, reduce and etc.
  */
 const calcCommissionFees = async (readFile = readInputFile()) => {
