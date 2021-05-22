@@ -41,7 +41,7 @@ async function calcCashInCommissionFees(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-in');
   const cashInFee = feesConfig.percents / 100;
   const cashInMaxFee = feesConfig.max.amount;
-  const cashInUserOperations = sorting(parsedJSONdataWithFees, 'cash_in');
+  const cashInUserOperations = getTransfersByOperationType(parsedJSONdataWithFees, 'cash_in');
 
   cashInUserOperations.forEach((performedOperation) => {
     const calcCashInFee = performedOperation.operation.amount * cashInFee;
@@ -61,14 +61,14 @@ async function calcCashOutCommissionFeesNatural(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-natural');
   const cashOutWeekFeeNatural = feesConfig.percents / 100;
   const cashOutWeekLimitNatural = feesConfig.week_limit.amount;
-  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'natural');
+  const cashOutOperations = getTransfersByUserType(parsedJSONdataWithFees, 'natural');
   let userWeekTotalCashOut = 0;
   let firstWeekLimitExcess;
 
   // sort operations by user_id
-  cashCashOutOperations.sort((a, b) => a.user_id - b.user_id);
+  cashOutOperations.sort((a, b) => a.user_id - b.user_id);
 
-  cashCashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
+  cashOutOperations.reduce((prevPerformedOperation, performedOperation) => {
     const currentWeek = getNumberOfWeek(performedOperation.date);
     const prevWeek = getNumberOfWeek(prevPerformedOperation.date);
     // reset userWeekTotalCashOut if new week started or new user_id
@@ -105,9 +105,9 @@ async function calcCashOutCommissionFeesJuridical(parsedJSONdataWithFees) {
   const feesConfig = await getFeesConfig('http://vps785969.ovh.net/cash-out-juridical');
   const cashOutFeeJuridical = feesConfig.percents / 100;
   const cashOutFeeMinJuridical = feesConfig.min.amount;
-  const cashCashOutOperations = sorting(parsedJSONdataWithFees, 'cash_out', 'juridical');
+  const cashOutOperations = getTransfersByUserType(parsedJSONdataWithFees, 'juridical');
 
-  cashCashOutOperations.forEach((performedOperation) => {
+  cashOutOperations.forEach((performedOperation) => {
     const calcCashOutFeeJuridical = performedOperation.operation.amount * cashOutFeeJuridical;
 
     if (calcCashOutFeeJuridical <= cashOutFeeMinJuridical) {
@@ -131,28 +131,20 @@ function stdoutResult(parsedJSONdataWithFees) {
   });
 }
 
-function sorting(
-  parsedJSONdataWithFees,
-  operationType = false,
-  userType = false,
-) {
-  if (userType === 'natural' || userType === 'juridical') {
-    const sortedUserOperations = parsedJSONdataWithFees.filter(
-      (performedOperation) => (
-        performedOperation.user_type === userType && performedOperation.type === operationType
-      ),
-    );
-    return sortedUserOperations;
-  }
+function getTransfersByOperationType(parsedJSONdataWithFees, operationType) {
+  const sortedUserOperations = parsedJSONdataWithFees.filter(
+    (performedOperation) => (performedOperation.type === operationType),
+  );
+  return sortedUserOperations;
+}
 
-  if (operationType === 'cash_in' && !userType) {
-    const sortedUserOperations = parsedJSONdataWithFees.filter(
-      (performedOperation) => (performedOperation.type === operationType),
-    );
-    return sortedUserOperations;
-  }
-
-  return false;
+function getTransfersByUserType(parsedJSONdataWithFees, userType) {
+  const sortedUserOperations = parsedJSONdataWithFees.filter(
+    (performedOperation) => (
+      performedOperation.user_type === userType && performedOperation.type === 'cash_out'
+    ),
+  );
+  return sortedUserOperations;
 }
 
 export {
